@@ -511,6 +511,34 @@ class PlaylistTable(Base):
             )
 
     @classmethod
+    def reorder_playlist(cls, id: int, from_index: int, to_index: int, trackhash: str):
+        dbtrackhashes = cls.get_trackhashes(id)
+        if not dbtrackhashes:
+            return False
+
+        if from_index < 0 or from_index >= len(dbtrackhashes):
+            return False
+
+        if to_index < 0 or to_index >= len(dbtrackhashes):
+            return False
+
+        if dbtrackhashes[from_index] != trackhash:
+            return False
+
+        dbtrackhashes.insert(to_index, dbtrackhashes.pop(from_index))
+
+        next(
+            cls.execute(
+                update(cls)
+                .where((cls.id == id) & (cls.userid == get_current_userid()))
+                .values(trackhashes=dbtrackhashes),
+                commit=True,
+            )
+        )
+
+        return True
+
+    @classmethod
     def get_by_id(cls, id: int):
         result = cls.execute(
             select(cls).where((cls.id == id) & (cls.userid == get_current_userid()))

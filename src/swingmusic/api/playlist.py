@@ -408,6 +408,27 @@ def remove_tracks_from_playlist(
     return {"msg": "Done"}, 200
 
 
+class ReorderPlaylistTracksBody(BaseModel):
+    from_index: int = Field(..., description="The current index of the track")
+    to_index: int = Field(..., description="The index to move the track to")
+    trackhash: str = Field(..., description="The trackhash of the track being moved")
+
+
+@api.post("/<playlistid>/reorder-tracks")
+def reorder_playlist_tracks(path: PlaylistIDPath, body: ReorderPlaylistTracksBody):
+    """
+    Reorder playlist tracks
+    """
+    success = PlaylistTable.reorder_playlist(
+        path.playlistid, body.from_index, body.to_index, body.trackhash
+    )
+
+    if not success:
+        return {"msg": "Could not reorder"}, 400
+
+    return {"msg": "Done"}, 200
+
+
 class SavePlaylistAsItemBody(BaseModel):
     itemtype: str = Field(..., description="The type of item", example="tracks")
     playlist_name: str = Field(..., description="The name of the playlist")
